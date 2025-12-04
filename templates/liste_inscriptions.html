@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Liste des inscriptions</title>
+    <style>
+        /* Styles généraux */
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { margin-bottom: 5px; }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 20px;
+            /* Règle CRUCIALE : table-layout: fixed; */
+            table-layout: fixed; 
+        }
+        th, td { 
+        padding: 5px; 
+        border: 1px solid #444; 
+        overflow: hidden; 
+        word-wrap: break-word; 
+        /* AJOUT CLÉ : Réduction de la taille de police pour gagner de l'espace */
+        font-size: 10px; /* Essayez 10px ou même 9px si nécessaire (par exemple, 9pt) */
+        }
+        th { background: #eee; }
+    
+    /* ... (Attribution des largeurs aux colonnes 1% à 8%) ... */
+    
+    /* Styles pour les titres (TH) si vous voulez les garder un peu plus grands */
+        th {
+            font-size: 11px; /* Laissez les titres un peu plus grands pour la clarté */
+            text-align: center;
+        }
+        
+        /* ATTRIBUTION DES LARGEURS AUX COLONNES (en pourcentage de 100%) */
+        
+        /* 1. ID */
+        th:nth-child(1), td:nth-child(1) { width: 4%; } 
+
+        /* 2. Nom complet */
+        th:nth-child(2), td:nth-child(2) { width: 18%; } /* Plus de place pour les noms */
+
+        /* 3. Email */
+        th:nth-child(3), td:nth-child(3) { width: 22%; } /* Assez de place pour l'adresse complète */
+
+        /* 4. Téléphone */
+        th:nth-child(4), td:nth-child(4) { width: 10%; } 
+
+        /* 5. Catégorie */
+        th:nth-child(5), td:nth-child(5) { width: 10%; } 
+
+        /* 6. Services (la colonne la plus difficile, contrainte à 20%) */
+        .services, th:nth-child(6), td:nth-child(6) { 
+            width: 20%; 
+            font-size: 10px; 
+            white-space: normal; 
+        }
+        
+        /* 7. Date */
+        th:nth-child(7), td:nth-child(7) { width: 8%; } 
+
+        /* 8. Statut */
+        th:nth-child(8), td:nth-child(8) { width: 8%; } 
+        
+        /* Styles d'impression spécifiques pour WeasyPrint */
+        @page {
+            size: A4;
+            margin: 1cm;
+        }
+        tr {
+            page-break-inside: avoid;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Liste des inscriptions</h1>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nom complet</th>
+                <th>Email</th>
+                <th>Téléphone</th>
+                <th>Catégorie</th>
+                <th>Services</th>
+                <th>Date</th>
+                <!-- <th>Statut</th> -->
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for ins in inscriptions %}
+            <tr>
+                <td>{{ ins.id }}</td>
+
+                <td>{{ ins.nomClient }} {{ ins.prenomClient }}</td>
+
+                <td>{{ ins.emailClient }}</td>
+
+                <td>{{ ins.telephoneClient|default:"-" }}</td>
+
+                <td>
+                    {% if ins.categorie %}
+                        {{ ins.categorie.nom }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+
+                <td class="services">
+                    {% for s in ins.service.all %}
+                        • {{ s.nom }}<br>
+                    {% empty %}
+                        Aucun service
+                    {% endfor %}
+                </td>
+
+                <td>{{ ins.dateInscription }}</td>
+
+                <!-- <td>
+                    {% if ins.statut %}
+                        Validé
+                    {% else %}
+                        En attente
+                    {% endif %}
+                </td> -->
+            </tr>
+            {% endfor %}
+        </tbody>
+
+    </table>
+
+</body>
+</html>
