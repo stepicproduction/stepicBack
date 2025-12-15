@@ -146,21 +146,19 @@ DATABASES = {
 }
 
 # 1. Lecture des variables depuis Render
-AWS_ACCESS_KEY_ID = os.environ.get('SUPABASE_S3_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = os.environ.get('SUPABASE_S3_SECRET_ACCESS_KEY')
-AWS_STORAGE_BUCKET_NAME = os.environ.get("SUPABASE_BUCKET_NAME")
-AWS_ENDPOINT_URL = os.environ.get('SUPABASE_S3_ENDPOINT_URL')
-AWS_ENDPOINT_PUBLIC_URL = os.environ.get('SUPABASE_PUBLIC_URL')
+AWS_ACCESS_KEY_ID = os.environ.get('R2_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.environ.get('R2_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = os.environ.get("R2_BUCKET_NAME")
+AWS_ENDPOINT_URL = os.environ.get('R2_ENDPOINT_URL')
 
-#AWS_S3_CUSTOM_DOMAIN = f'{os.environ.get("SUPABASE_URL")}/storage/v1/object/public/{AWS_STORAGE_BUCKET_NAME}'
-
-AWS_S3_CUSTOM_DOMAIN = f'{AWS_ENDPOINT_PUBLIC_URL}/{AWS_STORAGE_BUCKET_NAME}'
+R2_PUBLIC_URL = "https://pub-63f518e954b14405884515a529caee6e.r2.dev"
 
 # 2. Configuration S3 (Protocole)
-AWS_S3_REGION_NAME = 'eu-west-1' 
+AWS_S3_REGION_NAME = 'auto' 
 AWS_QUERYSTRING_AUTH = False
-AWS_DEFAULT_ACL = 'public-read' # Sauf si votre bucket est privé
+AWS_DEFAULT_ACL = 'public-read'
 
+AWS_S3_CUSTOM_DOMAIN = R2_PUBLIC_URL
 # 3. Définition du stockage par défaut
 
 STORAGES = {
@@ -185,8 +183,7 @@ STORAGES = {
 
 #DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 # 4. URL de base pour les fichiers Média
-MEDIA_URL = f'{AWS_S3_CUSTOM_DOMAIN}/'
-
+MEDIA_URL = f'{AWS_S3_CUSTOM_DOMAIN}/{AWS_STORAGE_BUCKET_NAME}/'
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
