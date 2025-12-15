@@ -32,6 +32,7 @@ SECRET_KEY = env('SECRET_KEY')
 DEBUG = env.bool('DEBUG', default=False)
 
 ALLOWED_HOSTS = [
+    "stepic-back.onrender.com"
     "localhost",
     "127.0.0.1",
 ]
