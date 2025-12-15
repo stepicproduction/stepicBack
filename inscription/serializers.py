@@ -9,7 +9,7 @@ from service.models import Categorie
 class InscriptionSerializer(serializers.ModelSerializer):
     client = UtilisateurSerializer(read_only=True)
 
-    dateInscription = serializers.DateTimeField(format="%Y-%m-%d", read_only=True)
+    dateInscription = serializers.DateTimeField(format="%Y-%m-%d", required=False)
 
     service = serializers.PrimaryKeyRelatedField(
         queryset=Service.objects.all(), many=True)

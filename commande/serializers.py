@@ -14,7 +14,7 @@ class CommandeSerializer(serializers.ModelSerializer):
     
     service_detail = ServiceSerializer(source="service", many=True, read_only=True)
 
-    dateCommande = serializers.DateTimeField(format="%Y-%m-%d", read_only=True)
+    dateCommande = serializers.DateTimeField(format="%Y-%m-%d", required=False)
 
     categorie = serializers.PrimaryKeyRelatedField(queryset=Categorie.objects.all())
     
