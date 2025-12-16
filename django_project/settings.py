@@ -14,6 +14,7 @@ from pathlib import Path
 import os
 import environ
 import dj_database_url
+from datetime import timedelta
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -83,6 +84,20 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.AllowAny',
     ),
+}
+
+# Configuration de la durée de vie des jetons JWT
+SIMPLE_JWT = {
+    # Durée du Jeton d'Accès (le jeton utilisé pour les requêtes API)
+    # Augmenté à 60 minutes pour plus de confort d'utilisation sans renouvelement côté client.
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=120), 
+
+    # Durée du Jeton de Rafraîchissement (le jeton utilisé pour obtenir un nouveau jeton d'accès)
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7), # Garder 7 jours pour la sécurité
+
+    # Ajout de ces lignes par sécurité si ce n'est pas déjà fait :
+    'AUTH_HEADER_TYPES': ('Bearer',), # Standard pour l'en-tête Authorization
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
 }
 
 CORS_ALLOW_ALL_ORIGINS = True
