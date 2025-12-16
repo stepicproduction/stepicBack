@@ -151,14 +151,14 @@ AWS_SECRET_ACCESS_KEY = os.environ.get('R2_SECRET_ACCESS_KEY')
 AWS_STORAGE_BUCKET_NAME = os.environ.get("R2_BUCKET_NAME")
 AWS_ENDPOINT_URL = os.environ.get('R2_ENDPOINT_URL')
 
-R2_PUBLIC_URL = "https://pub-63f518e954b14405884515a529caee6e.r2.dev"
+R2_PUBLIC_URL_DOMAIN_ONLY = "pub-63f518e954b14405884515a529caee6e.r2.dev"
 
 # 2. Configuration S3 (Protocole)
 AWS_S3_REGION_NAME = 'auto' 
 AWS_QUERYSTRING_AUTH = False
 AWS_DEFAULT_ACL = 'public-read'
 
-AWS_S3_CUSTOM_DOMAIN = R2_PUBLIC_URL
+AWS_S3_CUSTOM_DOMAIN = R2_PUBLIC_URL_DOMAIN_ONLY
 # 3. Définition du stockage par défaut
 
 STORAGES = {
@@ -183,7 +183,7 @@ STORAGES = {
 
 #DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 # 4. URL de base pour les fichiers Média
-MEDIA_URL = f'{AWS_S3_CUSTOM_DOMAIN}/{AWS_STORAGE_BUCKET_NAME}/'
+MEDIA_URL = f'{AWS_S3_CUSTOM_DOMAIN}/'
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
