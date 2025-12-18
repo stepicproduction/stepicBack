@@ -9,10 +9,7 @@ from django.db.models import Count, Q
 from django.utils import timezone
 from service.models import Service
 from rest_framework import status
-from django.core.mail import send_mail
-from django.conf import settings
 import threading
-from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from rest_framework.permissions import AllowAny
 from django.utils.timezone import now, localtime
@@ -23,14 +20,16 @@ from weasyprint import HTML
 from django.db.models import F, Func, Value
 from django.db.models.functions import ExtractYear
 from django.contrib.staticfiles import finders
+import resend
+import os
+
+resend.api_key = os.environ.get("RESEND_API_KEY")
+FROM_EMAIL = "onboarding@resend.dev"
+ADMIN_EMAIL = os.environ.get("EMAIL_USER")
 
 
 def send_confirmation_email(inscription):
     try:
-        # Récupérer la catégorie et les services
-        print(f"DEBUG E-MAIL HOST: {settings.EMAIL_HOST}:{settings.EMAIL_PORT}")
-        print(f"DEBUG USER: {settings.EMAIL_HOST_USER}")
-        print(f"DEBUG FROM: {settings.DEFAULT_FROM_EMAIL}")
         categorie = inscription.categorie.nom if inscription.categorie else "N/A"
         services = inscription.service.all()
 
@@ -42,9 +41,6 @@ def send_confirmation_email(inscription):
 
         # Contenu HTML de l'email
         subject = "Bienvenu ! Votre inscription est en cours de validation"
-        from_email = settings.DEFAULT_FROM_EMAIL
-        to_email = [inscription.emailClient]
-
         html_content = f"""
         <html>
         <body>
@@ -62,9 +58,12 @@ def send_confirmation_email(inscription):
         """
 
         # Création et envoi de l'email HTML
-        email = EmailMultiAlternatives(subject, "", from_email, to_email)
-        email.attach_alternative(html_content, "text/html")
-        result = email.send(fail_silently=False)
+        result =  resend.Emails.send({
+            "from": FROM_EMAIL,
+            "to": inscription.emailClient,
+            "subject": subject,
+            "html": html_content
+        })
 
         if result == 1:
             print("✅ Email de confirmation envoyé avec succès !")
@@ -85,9 +84,6 @@ def send_admin_notification(inscription):
         services_list = ", ".join([s.nom for s in services]) or "Aucun"
 
         subject = f"🆕 Nouvelle inscription reçue - {inscription.nomClient} {inscription.prenomClient}"
-        from_email = settings.DEFAULT_FROM_EMAIL
-        admin_email = getattr(settings, "ADMIN_EMAIL", settings.DEFAULT_FROM_EMAIL)
-        to_email = [admin_email]
 
         html_content = f"""
         <html>
@@ -105,9 +101,13 @@ def send_admin_notification(inscription):
         </html>
         """
 
-        email = EmailMultiAlternatives(subject, "", from_email, to_email)
-        email.attach_alternative(html_content, "text/html")
-        email.send(fail_silently=False)
+ 
+        resend.Emails.send({
+            "from": FROM_EMAIL,
+            "to": ADMIN_EMAIL,
+            "subject": subject,
+            "html": html_content
+        })
         print("📩 Email d’alerte envoyé à l’administrateur !")
 
     except Exception as e:
@@ -125,8 +125,8 @@ class InscriptionViewSet(viewsets.ModelViewSet):
 
         print("🔴 Début du processus d'envoi d'e-mail (Synchrone) pour le débogage.")
 
-        threading.Thread(target=send_confirmation_email, args=(inscription,)).start()
-        threading.Thread(target=send_admin_notification, args=(inscription,)).start()
+        threading.Thread(target=send_confirmation_email, args=(inscription,), daemon=True).start()
+        threading.Thread(target=send_admin_notification, args=(inscription,), daemon=True).start()
 
         print("🟢 Fin du processus d'envoi d'e-mail (Synchrone).")
 
