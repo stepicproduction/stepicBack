@@ -24,7 +24,7 @@ import resend
 import os
 
 resend.api_key = os.environ.get("RESEND_API_KEY")
-FROM_EMAIL = "onboarding@resend.dev"
+FROM_EMAIL = "STEPIC <contact@stepic.mg>"
 ADMIN_EMAIL = os.environ.get("EMAIL_USER")
 
 def send_confirmation_email(commande):
@@ -64,7 +64,8 @@ def send_confirmation_email(commande):
             "from": FROM_EMAIL,
             "to": commande.emailClient,
             "subject": subject,
-            "html": html_content
+            "html": html_content,
+            "reply_to": ADMIN_EMAIL,
         })
 
 

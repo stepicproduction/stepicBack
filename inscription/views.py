@@ -24,7 +24,7 @@ import resend
 import os
 
 resend.api_key = os.environ.get("RESEND_API_KEY")
-FROM_EMAIL = "onboarding@resend.dev"
+FROM_EMAIL = "STEPIC <contact@stepic.mg>"
 ADMIN_EMAIL = os.environ.get("EMAIL_USER")
 
 
@@ -58,17 +58,13 @@ def send_confirmation_email(inscription):
         """
 
         # Création et envoi de l'email HTML
-        result =  resend.Emails.send({
+        resend.Emails.send({
             "from": FROM_EMAIL,
             "to": inscription.emailClient,
             "subject": subject,
-            "html": html_content
+            "html": html_content,
+            "reply_to": ADMIN_EMAIL,
         })
-
-        if result == 1:
-            print("✅ Email de confirmation envoyé avec succès !")
-        else:
-            print(f"⚠️ Échec de l'envoi de l'email, résultat: {result}.")
 
         print("Email de confirmation envoyé avec succès !")
 
