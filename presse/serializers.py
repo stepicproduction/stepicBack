@@ -4,7 +4,7 @@ from .models import Presse
 
 class PresseSerializers(serializers.ModelSerializer):
     user = UtilisateurSerializer(read_only=True)
-    date_pub = serializers.DateField(format="%Y-%m-%d %H:%M:%S", read_only=True)
+    date_pub = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
 
     class Meta:
         model = Presse

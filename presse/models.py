@@ -6,7 +6,7 @@ class Presse(models.Model):
     source = models.CharField(max_length=200, null=True, blank=True)
     contenu = models.TextField()
     image = models.ImageField(upload_to="presse/", blank=True, null=True)
-    date_pub = models.DateField(auto_now_add=True)
+    date_pub = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="Presse_crees")
 
     def __str__(self):
