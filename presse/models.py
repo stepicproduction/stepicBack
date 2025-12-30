@@ -3,6 +3,7 @@ from django.conf import settings
 
 class Presse(models.Model):
     titre = models.CharField(max_length=200)
+    source = models.CharField(max_length=200, null=True, blank=True)
     contenu = models.TextField()
     image = models.ImageField(upload_to="presse/", blank=True, null=True)
     date_pub = models.DateField(auto_now_add=True)
