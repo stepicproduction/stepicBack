@@ -25,5 +25,17 @@ class MessageViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print("Erreur :", e)
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+    @action(detail=True, methods=['put', 'patch'], url_path="repondu")
+    def repondu(self, request, pk=None):
+        try:
+            message = self.get_object()
+            message.statut = True  # On garde comme "Lu"
+            # Optionnel : tu peux ajouter un flag temporaire ou juste gérer côté front
+            message.save()
+            return Response({'message': 'Message répondu ✅'}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 
 

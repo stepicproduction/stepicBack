@@ -14,4 +14,7 @@ class MessageSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
     def get_statut(self, obj):
+        # Si tu veux gérer "Non lu", "Lu", "Répondu"
+        if hasattr(obj, 'repondu') and obj.repondu:  # si tu ajoutes un booléen temporaire côté back
+            return "Répondu"
         return "Lu" if obj.statut else "Non lu"
