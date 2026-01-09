@@ -21,6 +21,14 @@ class EtudiantViewSet(viewsets.ModelViewSet):
         """
         serializer.save()
 
+
+    def get_queryset(self):
+        queryset = Etudiant.objects.all()
+        matricule = self.request.query_params.get('matricule')
+        if matricule is not None:
+            queryset = queryset.filter(matricule=matricule)
+        return queryset
+
     @action(detail=True, methods=['get'], url_path='download_qr')
     def download_qr(self, request, pk=None):
         """

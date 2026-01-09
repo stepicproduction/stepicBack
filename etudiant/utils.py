@@ -13,7 +13,7 @@ def generate_modern_qr(student):
     # 2. Contenu textuel (Ce qui s'affiche au scan)
     # On utilise des majuscules et des séparateurs pour la clarté
     qr_payload = (
-        f"--- STEPIC MADA ---\n"
+        f"--- STEPIC ---\n"
         f"SITE : {site_web}\n\n"
         f"MATRICULE : {student.matricule}\n"
         f"NOM : {student.nom.upper()} {student.prenom}\n"
