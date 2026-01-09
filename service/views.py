@@ -99,34 +99,27 @@ class ServiceViewSet(viewsets.ModelViewSet):
 @permission_classes([AllowAny])
 def chat_assistant(request):
 
-    data = request.data
-
-    # 🛡️ Si data est une string → on parse manuellement
-    if isinstance(data, str):
-        try:
-            data = json.loads(data)
-        except json.JSONDecodeError:
-            return Response(
-                {"error": "Format JSON invalide"},
-                status=400
-            )
+    try:
+        body = request.body.decode("utf-8")
+        data = json.loads(body) if body else {}
+    except Exception:
+        return Response(
+            {"error": "JSON invalide"},
+            status=400
+        )
 
     user_message = data.get("message")
 
-    if not user_message:
+    if not isinstance(user_message, str) or not user_message.strip():
         return Response(
-            {"error": "Message vide"},
+            {"error": "Message manquant ou vide"},
             status=400
         )
 
     instruction = """
     Tu es l'assistant virtuel de STEPIC MADA (Madagascar).
-    Identité : Professionnel, créatif et accueillant.
-    Services : Communication, Design Graphique, Community Management, et Formations.
-    Missions :
-    - Expliquer les services
-    - Guider sur la vérification des diplômes
-    - Répondre en 3 phrases max
+    Ton ton est professionnel, chaleureux et clair.
+    Réponds en maximum 3 phrases.
     """
 
     try:
@@ -142,9 +135,9 @@ def chat_assistant(request):
         })
 
     except Exception as e:
-        print("Erreur Gemini :", e)
+        print("Erreur Gemini:", e)
         return Response(
-            {"error": "L'assistant est momentanément indisponible"},
+            {"error": "Assistant indisponible"},
             status=500
         )
 
