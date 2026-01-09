@@ -32,6 +32,8 @@ from showreel.views import ShowreelViewSet
 from temoignage.views import TemoignageViewSet
 from presse.views import PresseViewSet
 from equipe.views import EquipeModelViewSet
+from etudiant.views import EtudiantViewSet
+
 from rest_framework_simplejwt.views import (
     TokenRefreshView,
     TokenObtainPairView,
@@ -51,6 +53,7 @@ router.register(r"showreels", ShowreelViewSet, basename="showreel")
 router.register(r"temoignages", TemoignageViewSet, basename="temoignage")
 router.register(r"presses", PresseViewSet, basename="presse")
 router.register(r"equipes", EquipeModelViewSet, basename="equipe")
+router.register(r"etudiants", EtudiantViewSet, basename="etudiant")
 
 
 

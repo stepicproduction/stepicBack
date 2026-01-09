@@ -1,53 +1,68 @@
 import qrcode
 from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
+import os
+from django.conf import settings
 
 def generate_modern_qr(student):
-    # Configuration
+    # 1. Configuration des liens
     site_web = "www.stepic-mada.com"
+    # L'URL de vérification qui sera développée plus tard
     verify_url = f"https://{site_web}/verify/{student.matricule}"
     
-    # Données du QR
-    qr_data = f"STUDENT_VERIFY:{student.matricule}|{site_web}"
+    # 2. Contenu textuel (Ce qui s'affiche au scan)
+    # On utilise des majuscules et des séparateurs pour la clarté
+    qr_payload = (
+        f"--- STEPIC MADA ---\n"
+        f"SITE : {site_web}\n\n"
+        f"MATRICULE : {student.matricule}\n"
+        f"NOM : {student.nom.upper()} {student.prenom}\n"
+        f"PARCOURS : {student.parcours.nom}\n" # Affiche 'Développement Web' au lieu d'un ID
+        f"VERIFICATION EN LIGNE : {verify_url}\n"
+    )
 
-    # 1. Création du QR Code (High Quality)
+    # 3. Création du QR Code (Image)
     qr = qrcode.QRCode(
-        version=1,
-        error_correction=qrcode.constants.ERROR_CORRECT_H,
+        version=None, # S'adapte automatiquement à la taille du texte
+        error_correction=qrcode.constants.ERROR_CORRECT_H, 
         box_size=10,
         border=2,
     )
-    qr.add_data(qr_data)
+    qr.add_data(qr_payload)
     qr.make(fit=True)
+    
+    # Couleur sombre (#2c3e50) pour un look moderne
     qr_img = qr.make_image(fill_color="#2c3e50", back_color="white").convert('RGB')
 
-    # 2. Création du Canevas (Largeur 400px pour un rendu propre)
-    width, qr_height = qr_img.size
-    canvas_height = qr_height + 180
-    badge = Image.new('RGB', (width, canvas_height), 'white')
-    draw = ImageDraw.Draw(badge)
+    # 4. Insertion du logo au centre du QR
+    try:
+        logo_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'step.png')
+        if os.path.exists(logo_path):
+            logo = Image.open(logo_path)
+            qr_w, qr_h = qr_img.size
+            logo_size = qr_w // 4
+            logo = logo.resize((logo_size, logo_size), Image.LANCZOS)
+            pos = ((qr_w - logo_size) // 2, (qr_h - logo_size) // 2)
+            qr_img.paste(logo, pos)
+    except Exception as e:
+        print(f"Logo non chargé : {e}")
 
-    # 3. Design : Fond et bordures
+    # 5. Création du badge final (QR + Texte visuel en bas)
+    width, qr_h_final = qr_img.size
+    canvas_h = qr_h_final + 160
+    badge = Image.new('RGB', (width, canvas_h), 'white')
     badge.paste(qr_img, (0, 0))
     
-    # Ligne de séparation stylée
-    draw.rectangle([10, qr_height, width-10, qr_height+2], fill="#3498db")
-
-    # 4. Ajout des textes (Positionnement)
-    # Note: Sur Render, utilisez le chemin complet si vous uploadez une police .ttf
-    try:
-        font_main = ImageFont.load_default() # Remplacez par un .ttf pour plus de style
-    except:
-        font_main = ImageFont.load_default()
-
-    y_offset = qr_height + 20
-    draw.text((20, y_offset), f"ID: {student.matricule}", fill="#e74c3c")
-    draw.text((20, y_offset + 25), f"{student.nom.upper()} {student.prenom}", fill="#2c3e50")
-    draw.text((20, y_offset + 50), f"Parcours: {student.parcours}", fill="#7f8c8d")
-    draw.text((20, y_offset + 80), site_web, fill="#3498db")
+    draw = ImageDraw.Draw(badge)
     
-    # Petit badge "VÉRIFIÉ" en bas
-    draw.rectangle([width-100, canvas_height-30, width-10, canvas_height-10], fill="#2ecc71")
-    draw.text((width-90, canvas_height-25), "OFFICIEL", fill="white")
+    # Ligne de design bleue
+    draw.rectangle([15, qr_h_final, width-15, qr_h_final+3], fill="#3498db")
+
+    # Texte sur l'image (pour l'employé qui imprime)
+    y = qr_h_final + 20
+    draw.text((20, y), f"MATRICULE: {student.matricule}", fill="#e74c3c")
+    draw.text((20, y + 30), f"{student.nom.upper()} {student.prenom}", fill="#2c3e50")
+    draw.text((20, y + 60), f"PARCOURS: {student.parcours.nom}", fill="#7f8c8d")
+    draw.text((20, y + 90), site_web, fill="#3498db")
 
     return badge
