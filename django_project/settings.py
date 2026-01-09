@@ -69,6 +69,7 @@ INSTALLED_APPS = [
     'messag',
     'presse',
     'equipe',
+    'etudiant',
     'rest_framework_simplejwt',
     'storages',
 ]
