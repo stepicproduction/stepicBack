@@ -15,6 +15,8 @@ from weasyprint import HTML
 import os
 import google.generativeai as genai
 from rest_framework.decorators import api_view, permission_classes # (Vérifie si api_view est là)
+from django.views.decorators.csrf import csrf_exempt
+import json
 
 api_key = os.environ.get('GEMINI_API_KEY')
 
@@ -90,26 +92,41 @@ class ServiceViewSet(viewsets.ModelViewSet):
 
         response = HttpResponse(pdf, content_type="application/pdf")
         response['Content-Disposition'] = f'inline; filename="service.pdf"'
-        return response  
-
+        return response 
+     
+@csrf_exempt
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def chat_assistant(request):
-    user_message = request.data.get('message')
-    
-    if not user_message:
-        return Response({"error": "Message vide"}, status=400)
 
-    # Context personnalisé pour STEPIC MADA
+    data = request.data
+
+    # 🛡️ Si data est une string → on parse manuellement
+    if isinstance(data, str):
+        try:
+            data = json.loads(data)
+        except json.JSONDecodeError:
+            return Response(
+                {"error": "Format JSON invalide"},
+                status=400
+            )
+
+    user_message = data.get("message")
+
+    if not user_message:
+        return Response(
+            {"error": "Message vide"},
+            status=400
+        )
+
     instruction = """
     Tu es l'assistant virtuel de STEPIC MADA (Madagascar).
     Identité : Professionnel, créatif et accueillant.
     Services : Communication, Design Graphique, Community Management, et Formations.
-    Tes missions :
-    1. Expliquer nos services (Inscriptions, commandes de services).
-    2. Guider sur la vérification des diplômes via QR Code.
-    3. Présenter l'équipe ou les actualités brièvement.
-    Réponds en 3 phrases maximum. Sois chaleureux.
+    Missions :
+    - Expliquer les services
+    - Guider sur la vérification des diplômes
+    - Répondre en 3 phrases max
     """
 
     try:
@@ -117,10 +134,19 @@ def chat_assistant(request):
             model_name="gemini-1.5-flash",
             system_instruction=instruction
         )
+
         response = model.generate_content(user_message)
-        return Response({"reply": response.text})
+
+        return Response({
+            "reply": response.text or "Je suis là pour vous aider 😊"
+        })
+
     except Exception as e:
-        print(f"Erreur Gemini: {e}")
-        return Response({"error": "L'assistant est fatigué, réessaie plus tard."}, status=500)  
+        print("Erreur Gemini :", e)
+        return Response(
+            {"error": "L'assistant est momentanément indisponible"},
+            status=500
+        )
+
 
 
