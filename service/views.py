@@ -15,8 +15,6 @@ from weasyprint import HTML
 import os
 import google.generativeai as genai
 from rest_framework.decorators import api_view, permission_classes # (Vérifie si api_view est là)
-from django.views.decorators.csrf import csrf_exempt
-import json
 
 api_key = os.environ.get('GEMINI_API_KEY')
 
@@ -94,26 +92,17 @@ class ServiceViewSet(viewsets.ModelViewSet):
         response['Content-Disposition'] = f'inline; filename="service.pdf"'
         return response 
      
-@csrf_exempt
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def chat_assistant(request):
+    # DRF a déjà parsé le JSON, on récupère le message directement ici
+    user_message = request.data.get("message")
 
-    try:
-        body = request.body.decode("utf-8")
-        data = json.loads(body) if body else {}
-    except Exception:
-        return Response(
-            {"error": "JSON invalide"},
-            status=400
-        )
-
-    user_message = data.get("message")
-
-    if not isinstance(user_message, str) or not user_message.strip():
+    # Vérification simple
+    if not user_message:
         return Response(
             {"error": "Message manquant ou vide"},
-            status=400
+            status=status.HTTP_400_BAD_REQUEST
         )
 
     instruction = """
@@ -123,23 +112,24 @@ def chat_assistant(request):
     """
 
     try:
+        # Initialisation du modèle
         model = genai.GenerativeModel(
             model_name="gemini-1.5-flash",
             system_instruction=instruction
         )
 
+        # Appel à Gemini
         response = model.generate_content(user_message)
 
+        # On renvoie la réponse textuelle
         return Response({
-            "reply": response.text or "Je suis là pour vous aider 😊"
+            "reply": response.text if response.text else "Je suis là pour vous aider 😊"
         })
 
     except Exception as e:
-        print("Erreur Gemini:", e)
+        print("Erreur Gemini détaillée:", str(e))
         return Response(
-            {"error": "Assistant indisponible"},
-            status=500
+            {"error": "Assistant indisponible actuellement"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
-
-
 
