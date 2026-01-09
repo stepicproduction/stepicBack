@@ -95,41 +95,31 @@ class ServiceViewSet(viewsets.ModelViewSet):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def chat_assistant(request):
-    # DRF a déjà parsé le JSON, on récupère le message directement ici
-    user_message = request.data.get("message")
+    # Sécurité : Si request.data est une string, on ne peut pas faire .get()
+    # On vérifie donc le type de donnée reçue
+    if isinstance(request.data, dict):
+        user_message = request.data.get("message")
+    else:
+        # Si c'est déjà une string (cas de ton erreur actuelle)
+        user_message = request.data
 
-    # Vérification simple
     if not user_message:
-        return Response(
-            {"error": "Message manquant ou vide"},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-
-    instruction = """
-    Tu es l'assistant virtuel de STEPIC MADA (Madagascar).
-    Ton ton est professionnel, chaleureux et clair.
-    Réponds en maximum 3 phrases.
-    """
+        return Response({"error": "Message vide"}, status=400)
 
     try:
-        # Initialisation du modèle
+        # On s'assure que Gemini est configuré juste avant l'appel
+        genai.configure(api_key=os.environ.get('GEMINI_API_KEY'))
+        
         model = genai.GenerativeModel(
             model_name="gemini-1.5-flash",
-            system_instruction=instruction
+            system_instruction="Tu es l'assistant de STEPIC MADA. Réponds en 3 phrases max."
         )
 
-        # Appel à Gemini
         response = model.generate_content(user_message)
-
-        # On renvoie la réponse textuelle
-        return Response({
-            "reply": response.text if response.text else "Je suis là pour vous aider 😊"
-        })
+        
+        return Response({"reply": response.text})
 
     except Exception as e:
-        print("Erreur Gemini détaillée:", str(e))
-        return Response(
-            {"error": "Assistant indisponible actuellement"},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
+        print(f"Erreur Gemini: {e}")
+        return Response({"error": "L'IA est indisponible"}, status=500)
 
