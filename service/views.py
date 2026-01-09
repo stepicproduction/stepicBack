@@ -12,6 +12,12 @@ from django.http import HttpResponse
 from django.template.loader import render_to_string
 from weasyprint import HTML
 
+from django.conf import settings
+import google.generativeai as genai
+from rest_framework.decorators import api_view, permission_classes # (Vérifie si api_view est là)
+
+genai.configure(api_key=settings.env('GEMINI_API_KEY'))
+
 class CategorieViewSet(viewsets.ModelViewSet):
     queryset = Categorie.objects.all()
     serializer_class = CategorieSerializer
@@ -81,6 +87,37 @@ class ServiceViewSet(viewsets.ModelViewSet):
 
         response = HttpResponse(pdf, content_type="application/pdf")
         response['Content-Disposition'] = f'inline; filename="service.pdf"'
-        return response    
+        return response  
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def chat_assistant(request):
+    user_message = request.data.get('message')
+    
+    if not user_message:
+        return Response({"error": "Message vide"}, status=400)
+
+    # Context personnalisé pour STEPIC MADA
+    instruction = """
+    Tu es l'assistant virtuel de STEPIC MADA (Madagascar).
+    Identité : Professionnel, créatif et accueillant.
+    Services : Communication, Design Graphique, Community Management, et Formations.
+    Tes missions :
+    1. Expliquer nos services (Inscriptions, commandes de services).
+    2. Guider sur la vérification des diplômes via QR Code.
+    3. Présenter l'équipe ou les actualités brièvement.
+    Réponds en 3 phrases maximum. Sois chaleureux.
+    """
+
+    try:
+        model = genai.GenerativeModel(
+            model_name="gemini-1.5-flash",
+            system_instruction=instruction
+        )
+        response = model.generate_content(user_message)
+        return Response({"reply": response.text})
+    except Exception as e:
+        print(f"Erreur Gemini: {e}")
+        return Response({"error": "L'assistant est fatigué, réessaie plus tard."}, status=500)  
 
 

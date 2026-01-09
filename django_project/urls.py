@@ -22,6 +22,7 @@ from rest_framework import routers
 from utilisateur.views import UtilisateurViewSet
 from service.views import ServiceViewSet
 from service.views import CategorieViewSet
+from service.views import chat_assistant
 from inscription.views import InscriptionViewSet
 from commande.views import CommandeViewSet
 from actualites.views import BlogViewSet
@@ -62,6 +63,7 @@ urlpatterns = [
     path('api/', include(router.urls)),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('chat-assistant/', chat_assistant, name='chat-assistant'), # Route pour l'IA
 ]
 
 if settings.DEBUG:
