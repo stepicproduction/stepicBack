@@ -111,7 +111,7 @@ def chat_assistant(request):
         genai.configure(api_key=os.environ.get('GEMINI_API_KEY'))
         
         model = genai.GenerativeModel(
-            model_name="gemini-1.5-flash",
+            model_name="gemini-pro",
             system_instruction="Tu es l'assistant de STEPIC MADA. Réponds en 3 phrases max."
         )
 
