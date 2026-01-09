@@ -12,11 +12,14 @@ from django.http import HttpResponse
 from django.template.loader import render_to_string
 from weasyprint import HTML
 
-from django.conf import settings
+import os
 import google.generativeai as genai
 from rest_framework.decorators import api_view, permission_classes # (Vérifie si api_view est là)
 
-genai.configure(api_key=settings.env('GEMINI_API_KEY'))
+api_key = os.environ.get('GEMINI_API_KEY')
+
+if api_key:
+    genai.configure(api_key=api_key)
 
 class CategorieViewSet(viewsets.ModelViewSet):
     queryset = Categorie.objects.all()
