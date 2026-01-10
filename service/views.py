@@ -13,7 +13,7 @@ from django.template.loader import render_to_string
 from weasyprint import HTML
 
 import os
-import google.generativeai as genai
+from google import genai
 from rest_framework.decorators import api_view, permission_classes # (Vérifie si api_view est là)
 
 
@@ -91,25 +91,29 @@ class ServiceViewSet(viewsets.ModelViewSet):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def chat_assistant(request):
-    user_message = request.data.get("message") if isinstance(request.data, dict) else request.data
+    user_message = request.data.get("message")
     
+    if not user_message:
+        return Response({"error": "Message vide"}, status=400)
+
     try:
-        genai.configure(api_key=os.environ.get('GEMINI_API_KEY'))
+        # Initialisation du client avec ta clé API
+        client = genai.Client(api_key=os.environ.get('GEMINI_API_KEY'))
 
-        # Utilisation du modèle le plus rapide et stable de ta liste
-        model = genai.GenerativeModel('gemini-2.0-flash')
-
-        # On passe l'identité de l'IA ici pour qu'elle sache qui elle est
-        prompt = (
-            "Identité: Tu es l'assistant virtuel de STEPIC MADA (Madagascar). "
-            "Style: Professionnel, chaleureux et concis (3 phrases max). "
-            f"Question client: {user_message}"
+        # Génération du contenu (Syntaxe simplifiée)
+        response = client.models.generate_content(
+            model='gemini-2.0-flash', # Version stable suggérée
+            contents=(
+                "Tu es l'assistant de STEPIC MADA (Centre de formation à Madagascar). "
+                "Réponds avec enthousiasme et professionnalisme. "
+                "Garde tes réponses courtes (maximum 3 phrases). "
+                f"Question client : {user_message}"
+            )
         )
 
-        response = model.generate_content(prompt)
-        
         return Response({"reply": response.text})
 
     except Exception as e:
-        print(f"Erreur lors de l'appel Gemini: {e}")
-        return Response({"error": "Service momentanément indisponible"}, status=500)
+        # On log l'erreur pour le debug Render
+        print(f"Erreur Gemini (Nouveau SDK) : {e}")
+        return Response({"error": "Désolé, je rencontre un problème technique."}, status=500)
