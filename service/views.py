@@ -16,10 +16,6 @@ import os
 import google.generativeai as genai
 from rest_framework.decorators import api_view, permission_classes # (Vérifie si api_view est là)
 
-api_key = os.environ.get('GEMINI_API_KEY')
-
-if api_key:
-    genai.configure(api_key=api_key)
 
 class CategorieViewSet(viewsets.ModelViewSet):
     queryset = Categorie.objects.all()
@@ -111,7 +107,7 @@ def chat_assistant(request):
         genai.configure(api_key=os.environ.get('GEMINI_API_KEY'))
         
         model = genai.GenerativeModel(
-            model_name="gemini-pro",
+            model_name="gemini-1.5-flash-latest",
             system_instruction="Tu es l'assistant de STEPIC MADA. Réponds en 3 phrases max."
         )
 
