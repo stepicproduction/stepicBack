@@ -102,7 +102,7 @@ def chat_assistant(request):
 
         # Génération du contenu (Syntaxe simplifiée)
         response = client.models.generate_content(
-            model='gemini-2.0-flash', # Version stable suggérée
+            model='gemini-1.5-flash', # Version stable suggérée
             contents=(
                 "Tu es l'assistant de STEPIC MADA (Centre de formation à Madagascar). "
                 "Réponds avec enthousiasme et professionnalisme. "
