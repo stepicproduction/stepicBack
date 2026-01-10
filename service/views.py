@@ -96,24 +96,20 @@ def chat_assistant(request):
     try:
         genai.configure(api_key=os.environ.get('GEMINI_API_KEY'))
 
-        # TEST DE SECOURS : On essaie le nom ultra-court sans aucun préfixe
-        # Si gemini-1.5-flash échoue, le SDK est peut-être très vieux, 
-        # on essaie alors 'gemini-pro' mais sans le 'models/'
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        # Utilisation du modèle le plus rapide et stable de ta liste
+        model = genai.GenerativeModel('gemini-2.0-flash')
 
-        prompt = f"Tu es l'assistant de STEPIC MADA. Réponds brièvement : {user_message}"
+        # On passe l'identité de l'IA ici pour qu'elle sache qui elle est
+        prompt = (
+            "Identité: Tu es l'assistant virtuel de STEPIC MADA (Madagascar). "
+            "Style: Professionnel, chaleureux et concis (3 phrases max). "
+            f"Question client: {user_message}"
+        )
+
         response = model.generate_content(prompt)
         
         return Response({"reply": response.text})
 
     except Exception as e:
-        # CE LOG EST CRUCIAL : il va nous dire quels modèles TON serveur a le droit d'utiliser
-        print("--- DEBUG LOG MODELS ---")
-        try:
-            for m in genai.list_models():
-                print(f"Disponible: {m.name}")
-        except:
-            print("Impossible de lister les modèles")
-        
-        print(f"Erreur Gemini: {e}")
-        return Response({"error": "Assistant en maintenance"}, status=500)
+        print(f"Erreur lors de l'appel Gemini: {e}")
+        return Response({"error": "Service momentanément indisponible"}, status=500)
