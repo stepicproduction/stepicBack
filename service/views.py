@@ -91,31 +91,41 @@ class ServiceViewSet(viewsets.ModelViewSet):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def chat_assistant(request):
-    # Sécurité : Si request.data est une string, on ne peut pas faire .get()
-    # On vérifie donc le type de donnée reçue
+
+    # Sécurité sur le parsing
     if isinstance(request.data, dict):
         user_message = request.data.get("message")
     else:
-        # Si c'est déjà une string (cas de ton erreur actuelle)
         user_message = request.data
 
-    if not user_message:
-        return Response({"error": "Message vide"}, status=400)
+    if not user_message or not str(user_message).strip():
+        return Response(
+            {"error": "Message vide"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
     try:
-        # On s'assure que Gemini est configuré juste avant l'appel
-        genai.configure(api_key=os.environ.get('GEMINI_API_KEY'))
-        
+        # Configuration Gemini (OBLIGATOIRE sur Render)
+        genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
+
         model = genai.GenerativeModel(
-            model_name="gemini-1.5-flash-latest",
-            system_instruction="Tu es l'assistant de STEPIC MADA. Réponds en 3 phrases max."
+            model_name="gemini-1.5-flash",
+            system_instruction=(
+                "Tu es l'assistant virtuel de STEPIC MADA (Madagascar). "
+                "Sois professionnel, chaleureux et clair. "
+                "Réponds en maximum 3 phrases."
+            )
         )
 
         response = model.generate_content(user_message)
-        
-        return Response({"reply": response.text})
+
+        return Response({
+            "reply": response.text or "Je suis là pour vous aider 😊"
+        })
 
     except Exception as e:
-        print(f"Erreur Gemini: {e}")
-        return Response({"error": "L'IA est indisponible"}, status=500)
-
+        print("❌ Erreur Gemini:", e)
+        return Response(
+            {"error": "L'IA est indisponible actuellement"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
