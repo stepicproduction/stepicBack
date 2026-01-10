@@ -91,41 +91,29 @@ class ServiceViewSet(viewsets.ModelViewSet):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def chat_assistant(request):
-
-    # Sécurité sur le parsing
-    if isinstance(request.data, dict):
-        user_message = request.data.get("message")
-    else:
-        user_message = request.data
-
-    if not user_message or not str(user_message).strip():
-        return Response(
-            {"error": "Message vide"},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-
+    user_message = request.data.get("message") if isinstance(request.data, dict) else request.data
+    
     try:
-        # Configuration Gemini (OBLIGATOIRE sur Render)
-        genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
+        genai.configure(api_key=os.environ.get('GEMINI_API_KEY'))
 
-        model = genai.GenerativeModel(
-            model_name="gemini-1.5-flash",
-            system_instruction=(
-                "Tu es l'assistant virtuel de STEPIC MADA (Madagascar). "
-                "Sois professionnel, chaleureux et clair. "
-                "Réponds en maximum 3 phrases."
-            )
-        )
+        # TEST DE SECOURS : On essaie le nom ultra-court sans aucun préfixe
+        # Si gemini-1.5-flash échoue, le SDK est peut-être très vieux, 
+        # on essaie alors 'gemini-pro' mais sans le 'models/'
+        model = genai.GenerativeModel('gemini-1.5-flash')
 
-        response = model.generate_content(user_message)
-
-        return Response({
-            "reply": response.text or "Je suis là pour vous aider 😊"
-        })
+        prompt = f"Tu es l'assistant de STEPIC MADA. Réponds brièvement : {user_message}"
+        response = model.generate_content(prompt)
+        
+        return Response({"reply": response.text})
 
     except Exception as e:
-        print("❌ Erreur Gemini:", e)
-        return Response(
-            {"error": "L'IA est indisponible actuellement"},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
+        # CE LOG EST CRUCIAL : il va nous dire quels modèles TON serveur a le droit d'utiliser
+        print("--- DEBUG LOG MODELS ---")
+        try:
+            for m in genai.list_models():
+                print(f"Disponible: {m.name}")
+        except:
+            print("Impossible de lister les modèles")
+        
+        print(f"Erreur Gemini: {e}")
+        return Response({"error": "Assistant en maintenance"}, status=500)
