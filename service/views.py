@@ -130,6 +130,7 @@ def chat_assistant(request):
             "6. Si l'utilisateur demande notre localisation, nous sommes à Tuléar Madagascar, Tanambao-I, ruelle n°2 derrière Supermaki ou dirige-le vers l'onglet Contact où il y a une carte de google Map'.\n"
             "7. Réponds toujours en 3 phrases maximum, avec enthousiasme. \n"
             "8. Si l'utilisateur veut en savoir plus sur qui nous sommes, dirige-le vers l'onglet 'À Propos' \n"
+            "9. Si l'utilisateur te demande les prix des formations, répond lui de contacter le responsable ou l'admin' \n"
         )
 
         client = genai.Client(api_key=os.environ.get('GEMINI_API_KEY'))
