@@ -10,7 +10,7 @@ from .serializers import EtudiantSerializer
 from .utils import generate_modern_qr  # Ta fonction de génération
 
 class EtudiantViewSet(viewsets.ModelViewSet):
-    queryset = Etudiant.objects.all()
+    queryset = Etudiant.objects.all().select_related('inscription__categorie').prefetch_related('inscription__service')
     serializer_class = EtudiantSerializer
     permission_classes = [AllowAny] # À sécuriser plus tard avec IsAuthenticated
 

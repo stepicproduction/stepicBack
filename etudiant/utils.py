@@ -5,36 +5,40 @@ import os
 from django.conf import settings
 
 def generate_modern_qr(student):
-    # 1. Configuration des liens
+    inscription = student.inscription
+    
+    # 1. On récupère la catégorie
+    categorie_nom = inscription.categorie.nom if inscription.categorie else "Formation"
+    
+    # 2. On récupère TOUS les services liés et on les joint par une virgule
+    services_obj = inscription.service.all()
+    services_noms = ", ".join([s.nom for s in services_obj]) if services_obj else "Aucun service"
+    
     site_web = "www.stepic-mada.com"
-    # L'URL de vérification qui sera développée plus tard
     verify_url = f"https://{site_web}/verify/{student.matricule}"
     
-    # 2. Contenu textuel (Ce qui s'affiche au scan)
-    # On utilise des majuscules et des séparateurs pour la clarté
+    # 3. Contenu textuel du QR (complet)
     qr_payload = (
-        f"--- STEPIC ---\n"
-        f"SITE : {site_web}\n\n"
+        f"--- STEPIC MADA ---\n"
         f"MATRICULE : {student.matricule}\n"
-        f"NOM : {student.nom.upper()} {student.prenom}\n"
-        f"PARCOURS : {student.parcours.nom}\n" # Affiche 'Développement Web' au lieu d'un ID
-        f"VERIFICATION EN LIGNE : {verify_url}\n"
+        f"NOM : {inscription.nomClient.upper()} {inscription.prenomClient}\n"
+        f"CATÉGORIE : {categorie_nom}\n"
+        f"SERVICES : {services_noms}\n" # Liste complète dans le scan
+        f"VÉRIFICATION : {verify_url}\n"
     )
 
-    # 3. Création du QR Code (Image)
+    # 4. Création du QR Code
     qr = qrcode.QRCode(
-        version=None, # S'adapte automatiquement à la taille du texte
+        version=None,
         error_correction=qrcode.constants.ERROR_CORRECT_H, 
         box_size=10,
         border=2,
     )
     qr.add_data(qr_payload)
     qr.make(fit=True)
-    
-    # Couleur sombre (#2c3e50) pour un look moderne
     qr_img = qr.make_image(fill_color="#2c3e50", back_color="white").convert('RGB')
 
-    # 4. Insertion du logo au centre du QR
+    # 5. Insertion du logo (inchangé)
     try:
         logo_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'step.png')
         if os.path.exists(logo_path):
@@ -47,22 +51,27 @@ def generate_modern_qr(student):
     except Exception as e:
         print(f"Logo non chargé : {e}")
 
-    # 5. Création du badge final (QR + Texte visuel en bas)
+    # 6. Création du badge final
     width, qr_h_final = qr_img.size
-    canvas_h = qr_h_final + 160
+    # On augmente un peu la hauteur du canvas (+180 au lieu de 160) pour laisser de la place aux services
+    canvas_h = qr_h_final + 180 
     badge = Image.new('RGB', (width, canvas_h), 'white')
     badge.paste(qr_img, (0, 0))
     
     draw = ImageDraw.Draw(badge)
-    
-    # Ligne de design bleue
     draw.rectangle([15, qr_h_final, width-15, qr_h_final+3], fill="#3498db")
 
-    # Texte sur l'image (pour l'employé qui imprime)
+    # Texte visuel en bas du badge
     y = qr_h_final + 20
     draw.text((20, y), f"MATRICULE: {student.matricule}", fill="#e74c3c")
-    draw.text((20, y + 30), f"{student.nom.upper()} {student.prenom}", fill="#2c3e50")
-    draw.text((20, y + 60), f"PARCOURS: {student.parcours.nom}", fill="#7f8c8d")
+    draw.text((20, y + 30), f"{inscription.nomClient.upper()} {inscription.prenomClient}", fill="#2c3e50")
+    
+    # Affichage Catégorie + Services (tronqué si trop long pour le visuel)
+    info_formation = f"{categorie_nom} ({services_noms})"
+    if len(info_formation) > 40:
+        info_formation = info_formation[:37] + "..."
+        
+    draw.text((20, y + 60), info_formation, fill="#7f8c8d")
     draw.text((20, y + 90), site_web, fill="#3498db")
 
     return badge

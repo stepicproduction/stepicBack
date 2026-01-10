@@ -1,28 +1,20 @@
 from rest_framework import serializers
 from .models import Etudiant
-from service.models import Service
+from inscription.serializers import InscriptionSerializer
 
 class EtudiantSerializer(serializers.ModelSerializer):
-    # 1. Pour l'affichage (GET) : on récupère le nom du service et de la catégorie
-    parcours_nom = serializers.ReadOnlyField(source='parcours.nom')
-    categorie_nom = serializers.ReadOnlyField(source='parcours.categorie.nom')
+    # On imbrique le serializer de l'inscription pour avoir tous les détails (nom, services, etc.)
+    inscription_details = InscriptionSerializer(source='inscription', read_only=True)
     
-    # 2. Lien vers le QR Code (Optionnel : pour que le front sache où le télécharger)
-    qr_code_url = serializers.SerializerMethodField()
+    # On peut aussi extraire juste des champs spécifiques si besoin
+    nom_complet = serializers.SerializerMethodField()
 
     class Meta:
         model = Etudiant
-        # 'parcours' attend l'ID du service lors d'un POST/PUT (venant de ton select front)
-        fields = [
-            'id', 
-            'nom', 
-            'prenom', 
-            'matricule', 
-            'parcours', 
-            'parcours_nom', 
-            'categorie_nom',
-            'qr_code_url'
-        ]
+        fields = ['id', 'matricule', 'date_creation', 'inscription', 'inscription_details', 'nom_complet']
+
+    def get_nom_complet(self, obj):
+        return f"{obj.inscription.nomClient} {obj.inscription.prenomClient}"
 
     def get_qr_code_url(self, obj):
         # Génère dynamiquement l'URL vers l'action download_qr du ViewSet
