@@ -97,23 +97,58 @@ def chat_assistant(request):
         return Response({"error": "Message vide"}, status=400)
 
     try:
-        # Initialisation du client avec ta clé API
+        # 1. Extraction des offres et catégories de la base de données
+        # On récupère tout pour que l'IA ait une vue d'ensemble
+        categories = Categorie.objects.all()
+        services = Service.objects.select_related('categorie').all()
+
+        # 2. Construction d'un catalogue textuel pour l'IA
+        catalogue_texte = "Voici nos offres actuelles chez STEPIC :\n"
+        for cat in categories:
+            catalogue_texte += f"\nCatégorie : {cat.nom}\n"
+            offres_de_cette_cat = services.filter(categorie=cat)
+            for s in offres_de_cette_cat:
+                catalogue_texte += f"- {s.nom} : {s.description[:100]}...\n"
+
+        # 3. Configuration des instructions système
+        instructions = (
+            "Tu es l'assistant de STEPIC. Ton rôle est de guider l'utilisateur sur notre site web. "
+            "Voici le plan du site pour orienter les clients :\n"
+            "- Onglet 'Services' ou 'Offres' : Pour voir toutes nos formations en détail.\n"
+            "- Onglet 'Contact' : Pour nous envoyer un message via le formulaire ou voir notre numéro.\n"
+            "- Section 'Actualités/Presse' : Pour lire nos derniers articles et événements.\n"
+            "- Bouton Commander : Présent sur certaines offres pour passer une commande directe via un formulaire de commande.\n"
+            "- Bouton 'S'inscrire' : Présent sur certaines offres pour s'inscrire directement via un formulaire d'inscription.\n\n"
+            "CONSIGNES :\n"
+            "1. Si l'utilisateur demande comment s'inscrire, dirige-le vers l'onglet 'Offres' pour choisir une offre.\n"
+            "2. Si l'utilisateur demande comment passer une commande, dirige-le vers l'onglet 'Offres' pour choisir une offre ou bien sur le header, il y a un bouton Commander pour passer directement une commande.\n"
+            "3. Si l'utilisateur a un problème spécifique, suggère le formulaire dans l'onglet 'Contact'.\n"
+            "4. Si l'utilisateur veut des news, parle-lui de la section 'Presse'.\n"
+            "5. Si l'utilisateur demande notre localisation, nous sommes à Tuléar Madagascar, Tanambao-I, ruelle n°2 derrière Supermaki ou dirige-le vers l'onglet Contact où il y a une carte de google Map'.\n"
+            "6. Réponds toujours en 3 phrases maximum, avec enthousiasme."
+        )
+
         client = genai.Client(api_key=os.environ.get('GEMINI_API_KEY'))
 
-        # Génération du contenu (Syntaxe simplifiée)
+        # 4. Envoi à Gemini
         response = client.models.generate_content(
-            model='models/gemini-flash-latest', # Version stable suggérée
-            contents=(
-                "Tu es l'assistant de STEPIC MADA (Centre de formation à Madagascar). "
-                "Réponds avec enthousiasme et professionnalisme. "
-                "Garde tes réponses courtes (maximum 3 phrases). "
-                f"Question client : {user_message}"
-            )
+            model='models/gemini-flash-latest',
+            config={
+                'system_instruction': instructions # On injecte le rôle ici
+            },
+            contents=f"CATALOGUE :\n{catalogue_texte}\n\nQUESTION CLIENT : {user_message}"
         )
 
         return Response({"reply": response.text})
 
     except Exception as e:
-        # On log l'erreur pour le debug Render
-        print(f"Erreur Gemini (Nouveau SDK) : {e}")
-        return Response({"error": "Désolé, je rencontre un problème technique."}, status=500)
+        error_str = str(e)
+        # On vérifie si c'est une erreur de quota (429 ou "quota exceeded")
+        if "429" in error_str or "quota" in error_str.lower() or "exhausted" in error_str.lower():
+            return Response({
+                "reply": "Je reçois beaucoup de messages en ce moment ! 🚀 Veuillez patienter quelques instants avant de me reposer votre question. Je serai de nouveau disponible dans une minute."
+            }, status=200) # On renvoie 200 pour que le front l'affiche comme un message normal
+        
+        # Pour les autres types d'erreurs
+        print(f"Erreur technique : {e}")
+        return Response({"reply": "Désolé, j'ai une petite fatigue technique. Réessayez dans un instant !"}, status=200)
